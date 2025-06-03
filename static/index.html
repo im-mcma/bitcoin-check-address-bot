@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>𝕚𝕞_𝕒𝕓𝕚🌙</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: url("https://raw.githubusercontent.com/im-mcma/File/main/background.jpg") no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+    .overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(1px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      opacity: 0;
+      animation: fadeInUp 1.5s ease forwards;
+      animation-delay: 0.5s;
+    }
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    h1 {
+      font-size: 3rem;
+      color: #ff6fff;
+      text-shadow: 0 0 5px #ff00cc, 0 0 15px #ff00cc, 0 0 30px #ff00cc;
+      animation: neonPulse 3s ease-in-out infinite;
+      margin-bottom: 20px;
+      user-select: none;
+    }
+    @keyframes neonPulse {
+      0%, 100% {
+        text-shadow: 0 0 5px #ff00cc, 0 0 15px #ff00cc, 0 0 30px #ff00cc;
+      }
+      50% {
+        text-shadow: 0 0 10px #fff, 0 0 30px #ff00cc, 0 0 60px #ff00cc;
+      }
+    }
+    .typed-text {
+      font-size: 1.5rem;
+      margin-bottom: 30px;
+      color: #eee;
+      min-height: 40px;
+      font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+      user-select: none;
+      letter-spacing: 1.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 3px solid #ff00cc;
+      animation: blinkCaret 0.7s step-end infinite;
+      max-width: 90vw;
+    }
+    @keyframes blinkCaret {
+      50% { border-color: transparent; }
+      100% { border-color: #ff00cc; }
+    }
+    .links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 15px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 1rem;
+      color: #fff;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+      user-select: none;
+      font-weight: 600;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+    }
+    .links a.telegram { background-color: #0088cc; }
+    .links a.github { background-color: #333; }
+    .links a.channel { background-color: #ff4500; }
+    .links a:hover {
+      transform: scale(1.12);
+      box-shadow: 0 0 15px currentColor;
+    }
+    .links i {
+      font-size: 1.2rem;
+    }
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2.2rem;
+      }
+      .typed-text {
+        font-size: 1.2rem;
+        min-height: 36px;
+      }
+      .links a {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+        margin: 8px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <h1>𝕚𝕞_𝕒𝕓𝕚🌙</h1>
+    <div class="typed-text" id="typed-text"></div>
+    <div class="links">
+      <a href="https://t.me/im_abi_oo" target="_blank" rel="noopener noreferrer" class="telegram">
+        <i class="fab fa-telegram"></i> Support
+      </a>
+      <a href="https://github.com/im-mcma/" target="_blank" rel="noopener noreferrer" class="github">
+        <i class="fab fa-github"></i> GitHub
+      </a>
+      <a href="https://t.me/cryptofree_abi" target="_blank" rel="noopener noreferrer" class="channel">
+        <i class="fas fa-bullhorn"></i> Channel
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const strings = ["HELLO WORLD 👋", "BOT ACTIVE 🤖", "I'M ATOMIC 💜", "SYSTEM ONLINE 🔥"];
+    const typedText = document.getElementById("typed-text");
+    let i = 0, j = 0, current = "", isDeleting = false;
+
+    function type() {
+      if (!isDeleting && j <= strings[i].length) {
+        current = strings[i].substring(0, j++);
+      } else if (isDeleting && j >= 0) {
+        current = strings[i].substring(0, j--);
+      }
+
+      typedText.innerHTML = current;
+
+      let speed = isDeleting ? 80 : 120;
+
+      if (!isDeleting && j === strings[i].length) {
+        isDeleting = true;
+        speed = 1800;
+      } else if (isDeleting && j === 0) {
+        isDeleting = false;
+        i = (i + 1) % strings.length;
+        speed = 600;
+      }
+
+      setTimeout(type, speed);
+    }
+
+    type();
+  </script>
+</body>
+</html>
