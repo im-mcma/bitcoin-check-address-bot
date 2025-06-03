@@ -1,54 +1,67 @@
 
 ---
 
-# 🚀 Bitcoin check address Bot
+🚀 Bitcoin Check Address Bot
 
-A high-performance tool for **random Bitcoin private key scanning** with automatic matching against a target address list (`add.txt`).  
-If a match is found, the bot instantly sends the **private key** and **address** to your Telegram channel!
+A high-performance tool for random Bitcoin private key scanning, automatically matching generated addresses against a target list (add.txt).
+On a match, the bot instantly sends the private key and address to your Telegram channel!
 
----
-
-## 🛠 Features
-
-- 🔑 Generates Bitcoin addresses (Legacy - P2PKH and SegWit - Bech32) from random private keys  
-- 🎯 Checks generated addresses against a target list (`add.txt`)  
-- 📲 Sends instant notifications to your Telegram channel upon match  
-- 📊 Sends periodic 10-minute reports on keys scanned, uptime, CPU & RAM usage  
-- 🌐 Serves a simple web interface on port 1000 (optimized for Render.com deployment)  
 
 ---
 
-## 🚀 Getting Started
+🛠 Features
 
-### Prerequisites
+🔑 Generates Bitcoin addresses (Legacy - P2PKH & SegWit - Bech32) from random private keys
 
-- Python 3.8+  
-- Telegram Bot Token and Channel ID  
+🎯 Checks generated addresses against a target list (add.txt)
 
-### Installation
+📲 Sends instant notifications to your Telegram channel upon a match
 
-1. Clone this repo or download the files  
+📊 Sends periodic 10-minute reports with stats: keys scanned, uptime, CPU & RAM usage
+
+🌐 Provides a simple web interface on port 1000 (optimized for deployment on Render.com)
+
+
+
+---
+
+🚀 Getting Started
+
+Prerequisites
+
+Python 3.8 or higher
+
+Telegram Bot Token and Channel ID
+
+
+Installation
+
+1. Clone the repository or download the files:
+
+git clone https://github.com/im-mcm/bitcoin-check-address-bot.git
+cd bitcoin-check-address-bot
+
+
 2. Install dependencies:
 
-```bash
 pip install -r requirements.txt
 
-3. Setup environment variables (recommended using .env or platform env settings):
 
-
+3. Set up environment variables (recommended via .env file or your deployment platform settings):
 
 export BOT_TOKEN="your_bot_token_here"
 export CHANNEL_ID="@yourchannelusername"
 export PORT=1000
+
 
 4. Add your target Bitcoin addresses (one per line) to add.txt
 
 
 5. Run the bot:
 
+python bot.py
 
 
-python main.py
 
 
 ---
@@ -57,23 +70,23 @@ python main.py
 
 project/
 │
-├── add.txt              # Target Bitcoin addresses
+├── add.txt              # List of target Bitcoin addresses
 ├── main.py              # Main bot script
 ├── requirements.txt     # Python dependencies
 ├── static/
 │   └── index.html       # Simple web interface
-└── README.md            # This file
+└── README.md            # This documentation file
 
 
 ---
 
 💡 Notes
 
-This tool prioritizes speed over security — do NOT use this for real wallets!
+This tool prioritizes speed over security — do NOT use for real wallets!
 
-Keep the target address list size moderate to avoid high RAM usage.
+Keep the target address list size moderate to avoid high memory usage.
 
-The bot automatically updates reports every 10 minutes in Telegram.
+Reports are automatically updated and sent every 10 minutes on Telegram.
 
 
 
@@ -81,7 +94,7 @@ The bot automatically updates reports every 10 minutes in Telegram.
 
 🤝 Support & Donate
 
-If you find this project useful, consider supporting it! 🙏
+If you find this project useful, please consider supporting it! 🙏
 
 BTC: bc1qxyzxyzxyzxyzxyzxyzxyzxyzxyzxyzxyz
 
@@ -101,5 +114,6 @@ MIT License © 2025
 ---
 
 Made with ❤️ by 𝕚𝕞_𝕒𝕓𝕚🌙
+
 
 --
