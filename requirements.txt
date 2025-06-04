@@ -2,3 +2,5 @@ bit
 flask
 requests
 psutil
+gunicorn
+coincurve
