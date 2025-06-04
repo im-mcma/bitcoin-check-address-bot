@@ -13,7 +13,7 @@ import sys
 # --- Settings ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
-PORT = int(os.getenv("PORT", 1000))
+PORT = int(os.getenv("PORT", 10000))
 START_TIME = time.time()
 
 # --- Flask app for port and index.html ---
