@@ -16,7 +16,7 @@ CHANNEL_ID = os.getenv("CHANNEL_ID")
 PORT = int(os.getenv("PORT", 10000))
 START_TIME = time.time()
 
-# --- Flask app for Render health check or index page ---
+# --- Flask app ---
 app = Flask(__name__, static_folder='static')
 
 @app.route('/')
@@ -24,10 +24,9 @@ def index():
     return send_from_directory('static', 'index.html')
 
 def flask_thread():
-    # Production mode — debug=False
-    app.run(host='0.0.0.0', port=PORT, debug=False)
+    app.run(host='0.0.0.0', port=PORT)
 
-# --- Telegram messaging with retry & backoff ---
+# --- Telegram messaging with retry ---
 def send_telegram_message(bot_token, chat_id, message, retries=5):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
@@ -37,29 +36,9 @@ def send_telegram_message(bot_token, chat_id, message, retries=5):
             if res.status_code == 200:
                 return True
             else:
-                print(f"[!] Telegram Send failed {res.status_code}: {res.text}")
+                print(f"[!] Telegram Send failed {res.status_code}: {res.text} - Message: {message}")
         except Exception as e:
             print(f"[!] Telegram Send Exception: {e}")
-        time.sleep(2 ** i)
-    return False
-
-def edit_telegram_message(bot_token, chat_id, message_id, new_text, retries=5):
-    url = f"https://api.telegram.org/bot{bot_token}/editMessageText"
-    payload = {
-        "chat_id": chat_id,
-        "message_id": message_id,
-        "text": new_text,
-        "parse_mode": "Markdown"
-    }
-    for i in range(retries):
-        try:
-            res = requests.post(url, json=payload, timeout=10)
-            if res.status_code == 200:
-                return True
-            else:
-                print(f"[!] Telegram Edit failed {res.status_code}: {res.text}")
-        except Exception as e:
-            print(f"[!] Telegram Edit Exception: {e}")
         time.sleep(2 ** i)
     return False
 
@@ -68,13 +47,17 @@ def load_target_addresses(filename):
     with open(filename, 'r') as f:
         return set(line.strip() for line in f if line.strip())
 
-# --- Generate different Bitcoin addresses ---
+# --- Generate only 1 and bc1 addresses ---
 def generate_addresses(key):
-    return [key.address, key.segwit_address]
+    addresses = [key.address, key.segwit_address]
+    return [addr for addr in addresses if addr.startswith('1') or addr.startswith('bc1')]
 
-# --- Format Match Found message ---
+# --- Format Match Found message and log ---
 def format_match_message(address, private_key):
     now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    with open("matches.log", "a") as log:
+        log.write(f"{datetime.datetime.utcnow().isoformat()} | {address} | {private_key}\n")
+
     return (
         f"🚨 *MATCH FOUND!* 🚨\n\n"
         f"🔑 *Address:*  \n`{address}`\n\n"
@@ -103,12 +86,12 @@ def worker(targets, queue, counter):
         key = Key()
         for addr in generate_addresses(key):
             if addr in targets:
-                print(f"[+] Match found! Address: {addr} | WIF: {key.to_wif()}")
+                print(f"[MATCH] {addr}")
                 queue.put(format_match_message(addr, key.to_wif()))
         with counter.get_lock():
             counter.value += 1
 
-# --- Listener for successful messages ---
+# --- Listener for matches ---
 def listener(queue, token, channel):
     while True:
         msg = queue.get()
@@ -116,7 +99,7 @@ def listener(queue, token, channel):
             break
         send_telegram_message(token, channel, msg)
 
-# --- Periodic report ---
+# --- Periodic report to Telegram ---
 def reporter(counter, token, channel):
     message_id = None
     first_time = True
@@ -127,19 +110,9 @@ def reporter(counter, token, channel):
         cpu = psutil.cpu_percent()
         ram = psutil.virtual_memory().percent
         msg = format_report_message(count, uptime, cpu, ram)
-        if first_time:
-            res = requests.post(
-                f"https://api.telegram.org/bot{token}/sendMessage",
-                json={"chat_id": channel, "text": msg, "parse_mode": "Markdown"}
-            )
-            if res.ok:
-                message_id = res.json().get("result", {}).get("message_id")
-                first_time = False
-        else:
-            if message_id:
-                edit_telegram_message(token, channel, message_id, msg)
+        send_telegram_message(token, channel, msg)
 
-# --- Safe process starter with auto-restart ---
+# --- Safe process loop ---
 def start_process_loop(target, args=()):
     while True:
         p = multiprocessing.Process(target=target, args=args)
@@ -148,7 +121,7 @@ def start_process_loop(target, args=()):
         print(f"[!] Process {target.__name__} crashed or exited. Restarting...")
         time.sleep(1)
 
-# --- Signal handler for graceful shutdown ---
+# --- Signal handler ---
 def signal_handler(sig, frame):
     print("[!] Signal received, shutting down...")
     sys.exit(0)
@@ -161,20 +134,23 @@ if __name__ == '__main__':
         print("[!] BOT_TOKEN or CHANNEL_ID is not set.")
         sys.exit(1)
 
-    print("[+] Starting bot...")
     send_telegram_message(BOT_TOKEN, CHANNEL_ID, "🚀 Bot is starting...")
 
+    # Start Flask in background thread
     threading.Thread(target=flask_thread, daemon=True).start()
 
+    # Load target addresses
     targets = load_target_addresses('add.txt')
     print(f"[+] Loaded {len(targets)} target addresses.")
 
     queue = multiprocessing.Queue()
     counter = multiprocessing.Value('i', 0)
 
+    # Listener and reporter processes
     multiprocessing.Process(target=start_process_loop, args=(listener, (queue, BOT_TOKEN, CHANNEL_ID))).start()
     multiprocessing.Process(target=start_process_loop, args=(reporter, (counter, BOT_TOKEN, CHANNEL_ID))).start()
 
+    # Worker processes
     for _ in range(max(1, multiprocessing.cpu_count() - 1)):
         multiprocessing.Process(target=start_process_loop, args=(worker, (targets, queue, counter))).start()
 
