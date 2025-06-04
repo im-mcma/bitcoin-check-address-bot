@@ -16,7 +16,7 @@ CHANNEL_ID = os.getenv("CHANNEL_ID")
 PORT = int(os.getenv("PORT", 10000))
 START_TIME = time.time()
 
-# --- Flask app for port and index.html ---
+# --- Flask app for Render health check or index page ---
 app = Flask(__name__, static_folder='static')
 
 @app.route('/')
@@ -24,7 +24,8 @@ def index():
     return send_from_directory('static', 'index.html')
 
 def flask_thread():
-    app.run(host='0.0.0.0', port=PORT)
+    # Production mode — debug=False
+    app.run(host='0.0.0.0', port=PORT, debug=False)
 
 # --- Telegram messaging with retry & backoff ---
 def send_telegram_message(bot_token, chat_id, message, retries=5):
@@ -102,6 +103,7 @@ def worker(targets, queue, counter):
         key = Key()
         for addr in generate_addresses(key):
             if addr in targets:
+                print(f"[+] Match found! Address: {addr} | WIF: {key.to_wif()}")
                 queue.put(format_match_message(addr, key.to_wif()))
         with counter.get_lock():
             counter.value += 1
@@ -159,26 +161,22 @@ if __name__ == '__main__':
         print("[!] BOT_TOKEN or CHANNEL_ID is not set.")
         sys.exit(1)
 
+    print("[+] Starting bot...")
     send_telegram_message(BOT_TOKEN, CHANNEL_ID, "🚀 Bot is starting...")
 
-    # Start Flask in thread
     threading.Thread(target=flask_thread, daemon=True).start()
 
-    # Load target addresses
     targets = load_target_addresses('add.txt')
     print(f"[+] Loaded {len(targets)} target addresses.")
 
     queue = multiprocessing.Queue()
     counter = multiprocessing.Value('i', 0)
 
-    # Start listener and reporter with auto-restart in separate processes
     multiprocessing.Process(target=start_process_loop, args=(listener, (queue, BOT_TOKEN, CHANNEL_ID))).start()
     multiprocessing.Process(target=start_process_loop, args=(reporter, (counter, BOT_TOKEN, CHANNEL_ID))).start()
 
-    # Start worker processes with auto-restart
     for _ in range(max(1, multiprocessing.cpu_count() - 1)):
         multiprocessing.Process(target=start_process_loop, args=(worker, (targets, queue, counter))).start()
 
-    # Main thread just waits forever
     while True:
         time.sleep(60)
