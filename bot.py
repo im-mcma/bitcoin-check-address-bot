@@ -52,12 +52,10 @@ def generate_addresses(key):
     addresses = [key.address, key.segwit_address]
     return [addr for addr in addresses if addr.startswith('1') or addr.startswith('bc1')]
 
-# --- Format Match Found message and log ---
+# --- Format Match Found message (حذف نوشتن به فایل) ---
 def format_match_message(address, private_key):
     now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-    with open("matches.log", "a") as log:
-        log.write(f"{datetime.datetime.utcnow().isoformat()} | {address} | {private_key}\n")
-
+    # حذف لاگ به فایل matches.log
     return (
         f"🚨 *MATCH FOUND!* 🚨\n\n"
         f"🔑 *Address:*  \n`{address}`\n\n"
@@ -70,7 +68,6 @@ def format_match_message(address, private_key):
 
 # --- Format 6-hour report message ---
 def format_report_message(count, uptime, cpu, ram):
-    # چون الان thread داریم، active process صفره، می‌تونیم تعداد thread ها رو بذاریم:
     thread_count = threading.active_count()
     return (
         f"🕒 *6-hour Report*\n\n"
