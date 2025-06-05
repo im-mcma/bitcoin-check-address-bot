@@ -68,11 +68,11 @@ def format_match_message(address, private_key):
         f"🔗 [بررسی تراکنش‌ها](https://www.blockchain.com/btc/address/{address})"
     )
 
-# --- Format 10-minute report message ---
+# --- Format 6-hour report message ---
 def format_report_message(count, uptime, cpu, ram):
     proc_count = len(multiprocessing.active_children())
     return (
-        f"🕒 *10-Minute Report*\n\n"
+        f"🕒 *6-hour Report*\n\n"
         f"🔢 *Addresses Checked:* `{count}`\n"
         f"⏱ *Uptime:* `{uptime}`\n"
         f"🖥 *CPU Usage:* `{cpu}%`\n"
@@ -104,7 +104,7 @@ def reporter(counter, token, channel):
     message_id = None
     first_time = True
     while True:
-        time.sleep(600)
+        time.sleep(21600)
         count = counter.value
         uptime = str(datetime.timedelta(seconds=int(time.time() - START_TIME)))
         cpu = psutil.cpu_percent()
