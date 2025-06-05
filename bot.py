@@ -1,4 +1,4 @@
-import multiprocessing
+import threading
 from bit import Key
 import requests
 import time
@@ -6,9 +6,9 @@ import datetime
 import os
 import psutil
 from flask import Flask, send_from_directory
-import threading
 import signal
 import sys
+import queue
 
 # --- Settings ---
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -70,56 +70,50 @@ def format_match_message(address, private_key):
 
 # --- Format 6-hour report message ---
 def format_report_message(count, uptime, cpu, ram):
-    proc_count = len(multiprocessing.active_children())
+    # چون الان thread داریم، active process صفره، می‌تونیم تعداد thread ها رو بذاریم:
+    thread_count = threading.active_count()
     return (
         f"🕒 *6-hour Report*\n\n"
         f"🔢 *Addresses Checked:* `{count}`\n"
         f"⏱ *Uptime:* `{uptime}`\n"
         f"🖥 *CPU Usage:* `{cpu}%`\n"
         f"💾 *RAM Usage:* `{ram}%`\n"
-        f"🔄 *Active Processes:* `{proc_count}`"
+        f"🔄 *Active Threads:* `{thread_count}`"
     )
 
-# --- Worker to check keys ---
-def worker(targets, queue, counter):
+# --- Worker thread to check keys ---
+def worker_thread(targets, queue, counter):
     while True:
         key = Key()
-        for addr in generate_addresses(key):
+        addrs = generate_addresses(key)
+        for addr in addrs:
             if addr in targets:
                 print(f"[MATCH] {addr}")
                 queue.put(format_match_message(addr, key.to_wif()))
-        with counter.get_lock():
-            counter.value += 1
+        with counter_lock:
+            counter[0] += 1
 
-# --- Listener for matches ---
-def listener(queue, token, channel):
+# --- Listener thread for matches ---
+def listener_thread(queue, token, channel):
     while True:
-        msg = queue.get()
-        if msg == 'STOP':
-            break
-        send_telegram_message(token, channel, msg)
+        try:
+            msg = queue.get()
+            if msg == 'STOP':
+                break
+            send_telegram_message(token, channel, msg)
+        except Exception as e:
+            print(f"[Listener Exception] {e}")
 
 # --- Periodic report to Telegram ---
-def reporter(counter, token, channel):
-    message_id = None
-    first_time = True
+def reporter_thread(counter, token, channel):
     while True:
-        time.sleep(21600)
-        count = counter.value
+        time.sleep(21600)  # 6 ساعت
+        count = counter[0]
         uptime = str(datetime.timedelta(seconds=int(time.time() - START_TIME)))
         cpu = psutil.cpu_percent()
         ram = psutil.virtual_memory().percent
         msg = format_report_message(count, uptime, cpu, ram)
         send_telegram_message(token, channel, msg)
-
-# --- Safe process loop ---
-def start_process_loop(target, args=()):
-    while True:
-        p = multiprocessing.Process(target=target, args=args)
-        p.start()
-        p.join()
-        print(f"[!] Process {target.__name__} crashed or exited. Restarting...")
-        time.sleep(1)
 
 # --- Signal handler ---
 def signal_handler(sig, frame):
@@ -136,23 +130,23 @@ if __name__ == '__main__':
 
     send_telegram_message(BOT_TOKEN, CHANNEL_ID, "🚀 Bot is starting...")
 
-    # Start Flask in background thread
     threading.Thread(target=flask_thread, daemon=True).start()
 
-    # Load target addresses
     targets = load_target_addresses('add.txt')
     print(f"[+] Loaded {len(targets)} target addresses.")
 
-    queue = multiprocessing.Queue()
-    counter = multiprocessing.Value('i', 0)
+    q = queue.Queue()
+    counter = [0]
+    counter_lock = threading.Lock()
 
-    # Listener and reporter processes
-    multiprocessing.Process(target=start_process_loop, args=(listener, (queue, BOT_TOKEN, CHANNEL_ID))).start()
-    multiprocessing.Process(target=start_process_loop, args=(reporter, (counter, BOT_TOKEN, CHANNEL_ID))).start()
+    # Listener and Reporter threads
+    threading.Thread(target=listener_thread, args=(q, BOT_TOKEN, CHANNEL_ID), daemon=True).start()
+    threading.Thread(target=reporter_thread, args=(counter, BOT_TOKEN, CHANNEL_ID), daemon=True).start()
 
-    # Worker processes
-    for _ in range(max(1, multiprocessing.cpu_count() - 1)):
-        multiprocessing.Process(target=start_process_loop, args=(worker, (targets, queue, counter))).start()
+    # Worker threads
+    num_workers = max(1, os.cpu_count() - 1)
+    for _ in range(num_workers):
+        threading.Thread(target=worker_thread, args=(targets, q, counter), daemon=True).start()
 
     while True:
         time.sleep(60)
