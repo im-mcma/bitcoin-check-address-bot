@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>𝕚𝕞_𝕒𝕓𝕚🌙</title>
+  <title>𝕚𝕞_𝕒𝕓𝕚🌙 Bot Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
@@ -12,39 +12,14 @@
     }
     body {
       margin: 0;
-      padding: 0;
-      height: 100vh;
+      padding: 20px;
+      min-height: 100vh;
       background: url("https://raw.githubusercontent.com/im-mcma/File/main/background.jpg") no-repeat center center fixed;
       background-size: cover;
       font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
       color: #fff;
-      overflow: hidden;
-    }
-    .overlay {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.15);
-      backdrop-filter: blur(1px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      opacity: 0;
-      animation: fadeInUp 1.5s ease forwards;
-      animation-delay: 0.5s;
-    }
-    @keyframes fadeInUp {
-      0% {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      overflow-x: hidden;
+      user-select: none;
     }
     h1 {
       font-size: 3rem;
@@ -53,6 +28,7 @@
       animation: neonPulse 3s ease-in-out infinite;
       margin-bottom: 20px;
       user-select: none;
+      text-align: center;
     }
     @keyframes neonPulse {
       0%, 100% {
@@ -62,23 +38,42 @@
         text-shadow: 0 0 10px #fff, 0 0 30px #ff00cc, 0 0 60px #ff00cc;
       }
     }
-    .typed-text {
-      font-size: 1.5rem;
-      margin-bottom: 30px;
-      color: #eee;
-      min-height: 40px;
-      font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
-      user-select: none;
-      letter-spacing: 1.5px;
-      white-space: nowrap;
-      overflow: hidden;
-      border-right: 3px solid #ff00cc;
-      animation: blinkCaret 0.7s step-end infinite;
-      max-width: 90vw;
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 40px;
     }
-    @keyframes blinkCaret {
-      50% { border-color: transparent; }
-      100% { border-color: #ff00cc; }
+    .stat-box {
+      background: rgba(34, 0, 51, 0.7);
+      border-radius: 12px;
+      padding: 20px 30px;
+      width: 180px;
+      box-shadow: 0 0 10px #ff00ccaa;
+      text-align: center;
+      user-select: none;
+      transition: transform 0.3s ease;
+    }
+    .stat-box:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px #ff00ccdd;
+    }
+    .stat-box h2 {
+      margin: 0 0 10px;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+    .stat-box p {
+      font-size: 2.5rem;
+      margin: 0;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 1.2px;
+    }
+    .links {
+      text-align: center;
+      margin-bottom: 30px;
     }
     .links a {
       display: inline-flex;
@@ -90,10 +85,11 @@
       text-decoration: none;
       font-size: 1rem;
       color: #fff;
-      transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
-      user-select: none;
       font-weight: 600;
-      box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 5px rgba(255, 0, 204, 0.5);
+      background-color: #550055;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
     }
     .links a.telegram { background-color: #0088cc; }
     .links a.github { background-color: #333; }
@@ -103,15 +99,21 @@
       box-shadow: 0 0 15px currentColor;
     }
     .links i {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
     }
     @media (max-width: 480px) {
       h1 {
         font-size: 2.2rem;
       }
-      .typed-text {
-        font-size: 1.2rem;
-        min-height: 36px;
+      .stat-box {
+        width: 140px;
+        padding: 15px 20px;
+      }
+      .stat-box h2 {
+        font-size: 1.1rem;
+      }
+      .stat-box p {
+        font-size: 2rem;
       }
       .links a {
         font-size: 0.9rem;
@@ -122,51 +124,59 @@
   </style>
 </head>
 <body>
-  <div class="overlay">
-    <h1>𝕚𝕞_𝕒𝕓𝕚🌙</h1>
-    <div class="typed-text" id="typed-text"></div>
-    <div class="links">
-      <a href="https://t.me/im_abi_oo" target="_blank" rel="noopener noreferrer" class="telegram">
-        <i class="fab fa-telegram"></i> Support
-      </a>
-      <a href="https://github.com/im-mcma/" target="_blank" rel="noopener noreferrer" class="github">
-        <i class="fab fa-github"></i> GitHub
-      </a>
-      <a href="https://t.me/cryptofree_abi" target="_blank" rel="noopener noreferrer" class="channel">
-        <i class="fas fa-bullhorn"></i> Channel
-      </a>
+  <h1>𝕚𝕞_𝕒𝕓𝕚🌙 Bot Dashboard</h1>
+  <div class="stats">
+    <div class="stat-box">
+      <h2>Scans Done</h2>
+      <p id="scans">0</p>
     </div>
+    <div class="stat-box">
+      <h2>Successes</h2>
+      <p id="successes">0</p>
+    </div>
+    <div class="stat-box">
+      <h2>Errors</h2>
+      <p id="errors">0</p>
+    </div>
+    <div class="stat-box">
+      <h2>CPU Usage</h2>
+      <p id="cpu">0%</p>
+    </div>
+    <div class="stat-box">
+      <h2>RAM Usage</h2>
+      <p id="ram">0%</p>
+    </div>
+  </div>
+  <div class="links">
+    <a href="https://t.me/im_abi_oo" target="_blank" rel="noopener noreferrer" class="telegram">
+      <i class="fab fa-telegram"></i> Support
+    </a>
+    <a href="https://github.com/im-mcma/" target="_blank" rel="noopener noreferrer" class="github">
+      <i class="fab fa-github"></i> GitHub
+    </a>
+    <a href="https://t.me/cryptofree_abi" target="_blank" rel="noopener noreferrer" class="channel">
+      <i class="fas fa-bullhorn"></i> Channel
+    </a>
   </div>
 
   <script>
-    const strings = ["HELLO WORLD 👋", "BOT ACTIVE 🤖", "I'M ATOMIC 💜", "SYSTEM ONLINE 🔥"];
-    const typedText = document.getElementById("typed-text");
-    let i = 0, j = 0, current = "", isDeleting = false;
-
-    function type() {
-      if (!isDeleting && j <= strings[i].length) {
-        current = strings[i].substring(0, j++);
-      } else if (isDeleting && j >= 0) {
-        current = strings[i].substring(0, j--);
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/stats");
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+        document.getElementById("scans").textContent = data.scans_done;
+        document.getElementById("successes").textContent = data.successes;
+        document.getElementById("errors").textContent = data.errors;
+        document.getElementById("cpu").textContent = data.cpu + "%";
+        document.getElementById("ram").textContent = data.ram + "%";
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
       }
-
-      typedText.innerHTML = current;
-
-      let speed = isDeleting ? 80 : 120;
-
-      if (!isDeleting && j === strings[i].length) {
-        isDeleting = true;
-        speed = 1800;
-      } else if (isDeleting && j === 0) {
-        isDeleting = false;
-        i = (i + 1) % strings.length;
-        speed = 600;
-      }
-
-      setTimeout(type, speed);
     }
 
-    type();
+    setInterval(fetchStats, 3000);
+    fetchStats();
   </script>
 </body>
 </html>
