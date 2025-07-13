@@ -22,13 +22,14 @@
       user-select: none;
     }
     h1 {
-      font-size: 3rem;
+      font-size: 2.8rem;
       color: #ff6fff;
       text-shadow: 0 0 5px #ff00cc, 0 0 15px #ff00cc, 0 0 30px #ff00cc;
       animation: neonPulse 3s ease-in-out infinite;
       margin-bottom: 20px;
       user-select: none;
       text-align: center;
+      line-height: 1.2;
     }
     @keyframes neonPulse {
       0%, 100% {
@@ -54,6 +55,7 @@
       text-align: center;
       user-select: none;
       transition: transform 0.3s ease;
+      word-wrap: break-word;
     }
     .stat-box:hover {
       transform: scale(1.1);
@@ -61,15 +63,18 @@
     }
     .stat-box h2 {
       margin: 0 0 10px;
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 700;
+      /* عنوان بخش */
     }
     .stat-box p {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
       margin: 0;
       font-weight: 900;
       color: #fff;
       letter-spacing: 1.2px;
+      /* عدد ها */
+      overflow-wrap: break-word;
     }
     .links {
       text-align: center;
@@ -113,7 +118,7 @@
         font-size: 1.1rem;
       }
       .stat-box p {
-        font-size: 2rem;
+        font-size: 1.7rem;
       }
       .links a {
         font-size: 0.9rem;
@@ -121,32 +126,69 @@
         margin: 8px 10px;
       }
     }
+
+    /* بخش تصاویر - کامنت‌ها راهنما */
+    .images-section {
+      max-width: 800px;
+      margin: 0 auto 40px auto;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .images-section img {
+      max-width: 180px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px #ff00ccaa;
+      transition: transform 0.3s ease;
+    }
+    .images-section img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px #ff00ccdd;
+    }
   </style>
 </head>
 <body>
-  <h1>𝕚𝕞_𝕒𝕓𝕚🌙 Bot Dashboard</h1>
+  <h1>
+    𝕚𝕞_𝕒𝕓𝕚🌙<br />
+    Bot Dashboard
+  </h1>
+
   <div class="stats">
     <div class="stat-box">
-      <h2>Scans Done</h2>
+      <h2>Scans Done</h2> <!-- تعداد اسکن‌ها -->
       <p id="scans">0</p>
     </div>
     <div class="stat-box">
-      <h2>Successes</h2>
+      <h2>Successes</h2> <!-- تعداد موفقیت‌ها -->
       <p id="successes">0</p>
     </div>
     <div class="stat-box">
-      <h2>Errors</h2>
+      <h2>Errors</h2> <!-- تعداد خطاها -->
       <p id="errors">0</p>
     </div>
     <div class="stat-box">
-      <h2>CPU Usage</h2>
+      <h2>CPU Usage</h2> <!-- درصد استفاده CPU -->
       <p id="cpu">0%</p>
     </div>
     <div class="stat-box">
-      <h2>RAM Usage</h2>
+      <h2>RAM Usage</h2> <!-- درصد استفاده RAM -->
       <p id="ram">0%</p>
     </div>
+    <div class="stat-box">
+      <h2>Uptime</h2> <!-- مدت زمان اجرا -->
+      <p id="uptime">0:00:00</p>
+    </div>
   </div>
+
+  <!-- بخش تصاویر (مثلاً اسلایدر یا گالری کوچک) -->
+  <div class="images-section">
+    <!-- راهنما: اینجا می‌توانید عکس‌هایی مثل لوگو، نمودارها یا تصاویر مرتبط با پروژه قرار بدید -->
+    <img src="https://raw.githubusercontent.com/im-mcma/File/main/background.jpg" alt="Background 1" />
+    <img src="https://raw.githubusercontent.com/im-mcma/File/main/background2.jpg" alt="Background 2" />
+    <img src="https://raw.githubusercontent.com/im-mcma/File/main/background3.jpg" alt="Background 3" />
+  </div>
+
   <div class="links">
     <a href="https://t.me/im_abi_oo" target="_blank" rel="noopener noreferrer" class="telegram">
       <i class="fab fa-telegram"></i> Support
@@ -160,16 +202,26 @@
   </div>
 
   <script>
+    // تابع تبدیل اعداد بزرگ به فرمت خوانا مثل K, M, B
+    function formatNumber(num) {
+      if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
+      if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+      if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+      return num.toString();
+    }
+
     async function fetchStats() {
       try {
         const res = await fetch("/api/stats");
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
-        document.getElementById("scans").textContent = data.scans_done;
-        document.getElementById("successes").textContent = data.successes;
-        document.getElementById("errors").textContent = data.errors;
-        document.getElementById("cpu").textContent = data.cpu + "%";
-        document.getElementById("ram").textContent = data.ram + "%";
+
+        document.getElementById("scans").textContent = formatNumber(data.scans_done);
+        document.getElementById("successes").textContent = formatNumber(data.successes);
+        document.getElementById("errors").textContent = formatNumber(data.errors);
+        document.getElementById("cpu").textContent = data.cpu.toFixed(1) + "%";
+        document.getElementById("ram").textContent = data.ram.toFixed(1) + "%";
+        document.getElementById("uptime").textContent = data.uptime || "0:00:00";
       } catch (err) {
         console.error("Failed to fetch stats:", err);
       }
