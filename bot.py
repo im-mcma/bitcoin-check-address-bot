@@ -5,7 +5,7 @@ import time
 import datetime
 import os
 import psutil
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, jsonify
 import signal
 import sys
 import queue
@@ -16,12 +16,37 @@ CHANNEL_ID = os.getenv("CHANNEL_ID")
 PORT = int(os.getenv("PORT", 10000))
 START_TIME = time.time()
 
+# Counters for stats
+stats = {
+    "scans_done": 0,
+    "successes": 0,
+    "errors": 0,
+}
+stats_lock = threading.Lock()
+
 # --- Flask app ---
 app = Flask(__name__, static_folder='static')
 
 @app.route('/')
 def index():
     return send_from_directory('static', 'index.html')
+
+@app.route('/api/stats')
+def api_stats():
+    with stats_lock:
+        cpu = psutil.cpu_percent()
+        ram = psutil.virtual_memory().percent
+        uptime_sec = int(time.time() - START_TIME)
+        uptime_str = str(datetime.timedelta(seconds=uptime_sec))
+        data = {
+            "scans_done": stats["scans_done"],
+            "successes": stats["successes"],
+            "errors": stats["errors"],
+            "cpu": cpu,
+            "ram": ram,
+            "uptime": uptime_str,
+        }
+    return jsonify(data)
 
 def flask_thread():
     app.run(host='0.0.0.0', port=PORT)
@@ -52,10 +77,9 @@ def generate_addresses(key):
     addresses = [key.address, key.segwit_address]
     return [addr for addr in addresses if addr.startswith('1') or addr.startswith('bc1')]
 
-# --- Format Match Found message (حذف نوشتن به فایل) ---
+# --- Format Match Found message ---
 def format_match_message(address, private_key):
     now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-    # حذف لاگ به فایل matches.log
     return (
         f"🚨 *MATCH FOUND!* 🚨\n\n"
         f"🔑 *Address:*  \n`{address}`\n\n"
@@ -79,16 +103,21 @@ def format_report_message(count, uptime, cpu, ram):
     )
 
 # --- Worker thread to check keys ---
-def worker_thread(targets, queue, counter):
+def worker_thread(targets, queue):
     while True:
         key = Key()
         addrs = generate_addresses(key)
+        with stats_lock:
+            stats["scans_done"] += 1
+        found_match = False
         for addr in addrs:
             if addr in targets:
+                found_match = True
                 print(f"[MATCH] {addr}")
                 queue.put(format_match_message(addr, key.to_wif()))
-        with counter_lock:
-            counter[0] += 1
+        if found_match:
+            with stats_lock:
+                stats["successes"] += 1
 
 # --- Listener thread for matches ---
 def listener_thread(queue, token, channel):
@@ -97,18 +126,24 @@ def listener_thread(queue, token, channel):
             msg = queue.get()
             if msg == 'STOP':
                 break
-            send_telegram_message(token, channel, msg)
+            success = send_telegram_message(token, channel, msg)
+            if not success:
+                with stats_lock:
+                    stats["errors"] += 1
         except Exception as e:
             print(f"[Listener Exception] {e}")
+            with stats_lock:
+                stats["errors"] += 1
 
 # --- Periodic report to Telegram ---
 def reporter_thread(counter, token, channel):
     while True:
         time.sleep(21600)  # 6 ساعت
-        count = counter[0]
-        uptime = str(datetime.timedelta(seconds=int(time.time() - START_TIME)))
-        cpu = psutil.cpu_percent()
-        ram = psutil.virtual_memory().percent
+        with stats_lock:
+            count = stats["scans_done"]
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            uptime = str(datetime.timedelta(seconds=int(time.time() - START_TIME)))
         msg = format_report_message(count, uptime, cpu, ram)
         send_telegram_message(token, channel, msg)
 
@@ -133,17 +168,13 @@ if __name__ == '__main__':
     print(f"[+] Loaded {len(targets)} target addresses.")
 
     q = queue.Queue()
-    counter = [0]
-    counter_lock = threading.Lock()
 
-    # Listener and Reporter threads
     threading.Thread(target=listener_thread, args=(q, BOT_TOKEN, CHANNEL_ID), daemon=True).start()
-    threading.Thread(target=reporter_thread, args=(counter, BOT_TOKEN, CHANNEL_ID), daemon=True).start()
+    threading.Thread(target=reporter_thread, args=(None, BOT_TOKEN, CHANNEL_ID), daemon=True).start()
 
-    # Worker threads
     num_workers = max(1, os.cpu_count() - 1)
     for _ in range(num_workers):
-        threading.Thread(target=worker_thread, args=(targets, q, counter), daemon=True).start()
+        threading.Thread(target=worker_thread, args=(targets, q), daemon=True).start()
 
     while True:
         time.sleep(60)
